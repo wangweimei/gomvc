@@ -153,3 +153,14 @@ case "cli":
 ```
 go run . cli 方法名
 ```
+
+### Redis 操作
+
+全局可使用`base.Redis`操作连接池，简单读取字符串的话，可以使用`base.RedisGet(key)`
+
+```go
+re := base.Redis.Get()//在连接池中取出一个链接
+defer re.Close()//放回链接池
+re.Do("SET", "key", "value", "EX", 3600)
+```
+
