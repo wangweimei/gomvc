@@ -1,0 +1,28 @@
+{
+    "debug": false,
+    "mysql": {
+        "host": "127.0.0.1",
+        "pwd": "",
+        "port": "3306",
+        "charset": "utf8mb4",
+        "db": "",
+        "prefix": "",
+        "maxIdle": 1000
+    },
+    "redis": {
+        "host": "127.0.0.1",
+        "pwd": "",
+        "port": "6379",
+        "maxIdle": 1000
+    },
+    "tls": [
+        {
+            "certFile": "",
+            "keyFile": ""
+        },
+        {
+            "certFile": "",
+            "keyFile": ""
+        }
+    ]
+}
