@@ -66,9 +66,9 @@ func main() {
 					tlsConfig.Certificates[k], _ = tls.LoadX509KeyPair(t["certFile"].(string), t["keyFile"].(string))
 				}
 				tlsConfig.BuildNameToCertificate()
-				listener, err = tls.Listen("tcp", ":443", tlsConfig)
+				listener, err = tls.Listen("tcp", base.Config["tlsAddress"].(string), tlsConfig)
 			} else {
-				listener, err = net.Listen("tcp", ":8888")
+				listener, err = net.Listen("tcp", base.Config["netAddress"].(string))
 			}
 		}
 

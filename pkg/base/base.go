@@ -36,7 +36,7 @@ func init() {
 	//mysql
 	if _, ok := c["mysql"]; ok {
 		m := c["mysql"].(map[string]interface{})
-		dsn := "root:@tcp(" + m["host"].(string) + ":" + m["port"].(string) + ")/" + m["db"].(string) + "?charset=" + m["charset"].(string) + "&parseTime=True&loc=Local"
+		dsn := m["username"].(string) + ":" + m["pwd"].(string) + "@tcp(" + m["host"].(string) + ":" + m["port"].(string) + ")/" + m["db"].(string) + "?charset=" + m["charset"].(string) + "&parseTime=True&loc=Local"
 		d, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 			SkipDefaultTransaction: true,
 			Logger:                 logger.Default.LogMode(logger.Silent),
