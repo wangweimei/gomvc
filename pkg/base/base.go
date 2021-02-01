@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"main/queue"
 	"os"
 	"time"
 
@@ -16,10 +17,13 @@ import (
 )
 
 var (
-	DB     *gorm.DB
-	Redis  *redigo.Pool
-	json   = jsoniter.ConfigCompatibleWithStandardLibrary
-	Config map[string]interface{}
+	DB        *gorm.DB
+	Redis     *redigo.Pool
+	json      = jsoniter.ConfigCompatibleWithStandardLibrary
+	Config    map[string]interface{}
+	queueFunc = map[string]func(string){
+		"test": queue.Test.Exec,
+	}
 )
 
 func init() {
@@ -72,6 +76,30 @@ func init() {
 			return c, nil
 		}, int(r["maxIdle"].(float64)))
 		Redis = pool
+
+		//加载redis队列
+		for ke, va := range queueFunc {
+			k := ke
+			v := va
+			go func() {
+				for {
+					con := pool.Get()
+					defer con.Close()
+					nameAndData, err := redigo.Strings(con.Do("brpop", k, 0))
+					if err != nil {
+						if err == redigo.ErrNil {
+							err = nil
+							continue
+						}
+						continue
+					}
+					if len(nameAndData) > 1 {
+						data := nameAndData[1]
+						v(data)
+					}
+				}
+			}()
+		}
 	}
 }
 
@@ -94,6 +122,13 @@ func RedisGet(key string) (d string) {
 	c := Redis.Get()
 	d, _ = redigo.String(c.Do("GET", key))
 	c.Close()
+	return
+}
+
+func PushQueue(queueName string, data string) (err error) {
+	con := Redis.Get()
+	defer con.Close()
+	_, err = con.Do("lpush", queueName, data)
 	return
 }
 

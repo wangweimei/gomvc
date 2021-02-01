@@ -18,6 +18,8 @@ TLS支持绑定多个域名证书
 
 支持MySQL、Redis
 
+Redis消息队列处理
+
 JSON配置文件
 
 CLI方法封装
@@ -162,5 +164,35 @@ go run . cli 方法名
 re := base.Redis.Get()//在连接池中取出一个链接
 defer re.Close()//放回链接池
 re.Do("SET", "key", "value", "EX", 3600)
+```
+
+### Redis消息队列处理
+
+可以使用以下方法推数据到队列，两个参数分别是队列名称和数据
+
+```go
+base.PushQueue("test", "data")
+```
+
+创建队列相应的处理方法，在`queue`目录下创建文件
+
+```go
+package queue
+
+type TestQueue struct{}
+
+var Test TestQueue
+
+func (t *TestQueue) Exec(d string) {
+	//方法内容
+}
+```
+
+加载队列处理方法，在`base.go`文件中添加配置，队列名称和相应的处理方法
+
+```go
+queueFunc = map[string]func(string){
+	"test": queue.Test.Exec,
+}
 ```
 

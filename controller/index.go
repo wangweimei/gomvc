@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"main/model"
+	"main/pkg/base"
 
 	template "main/view/index/default"
 
@@ -15,6 +16,7 @@ var Index IndexController
 
 func (t *IndexController) Default(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("text/html;charset=utf-8")
+	base.PushQueue("test", "123")
 
 	r := model.Sample.GetList()
 
