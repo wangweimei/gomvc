@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	"main/controller"
+	"main/queue"
 
 	"main/pkg/base"
 
@@ -23,9 +24,18 @@ import (
 )
 
 var (
-	json     = jsoniter.ConfigCompatibleWithStandardLibrary
-	listener net.Listener
-	graceful = flag.Bool("graceful", false, "listen on fd open 3 (internal use only)")
+	json      = jsoniter.ConfigCompatibleWithStandardLibrary
+	listener  net.Listener
+	graceful  = flag.Bool("graceful", false, "listen on fd open 3 (internal use only)")
+	queueFunc = map[string]func(string){
+		"test": queue.Test.Exec,
+	}
+	routerFunc = map[string]func(ctx *fasthttp.RequestCtx){
+		"/": controller.Index.Default,
+	}
+	cliFunc = map[string]func(){
+		"Test": Test,
+	}
 )
 
 func main() {
@@ -35,14 +45,13 @@ func main() {
 	if len(cmd) > 2 {
 		switch cmd[1] {
 		case "cli":
-			var f = map[string]func(){
-				"Test": Test,
-			}
-			f[cmd[2]]()
+			cliFunc[cmd[2]]()
 			break
 		}
 		return
 	} else {
+		base.LoadQueue(queueFunc)
+
 		srv := fasthttp.Server{
 			Handler: index,
 		}
@@ -111,11 +120,8 @@ func index(ctx *fasthttp.RequestCtx) {
 			}()
 		}
 	}
-	var c = map[string]func(ctx *fasthttp.RequestCtx){
-		"/": controller.Index.Default,
-	}
-	if _, ok := c[u]; ok {
-		c[u](ctx)
+	if _, ok := routerFunc[u]; ok {
+		routerFunc[u](ctx)
 	} else {
 		ctx.SetStatusCode(403)
 	}

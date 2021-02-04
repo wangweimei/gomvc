@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"main/queue"
 	"os"
 	"time"
 
@@ -17,13 +16,10 @@ import (
 )
 
 var (
-	DB        *gorm.DB
-	Redis     *redigo.Pool
-	json      = jsoniter.ConfigCompatibleWithStandardLibrary
-	Config    map[string]interface{}
-	queueFunc = map[string]func(string){
-		"test": queue.Test.Exec,
-	}
+	DB     *gorm.DB
+	Redis  *redigo.Pool
+	json   = jsoniter.ConfigCompatibleWithStandardLibrary
+	Config map[string]interface{}
 )
 
 func init() {
@@ -76,30 +72,6 @@ func init() {
 			return c, nil
 		}, int(r["maxIdle"].(float64)))
 		Redis = pool
-
-		//加载redis队列
-		for ke, va := range queueFunc {
-			k := ke
-			v := va
-			go func() {
-				for {
-					con := pool.Get()
-					defer con.Close()
-					nameAndData, err := redigo.Strings(con.Do("brpop", k, 0))
-					if err != nil {
-						if err == redigo.ErrNil {
-							err = nil
-							continue
-						}
-						continue
-					}
-					if len(nameAndData) > 1 {
-						data := nameAndData[1]
-						v(data)
-					}
-				}
-			}()
-		}
 	}
 }
 
@@ -151,4 +123,33 @@ func isExist(path string) bool {
 		return false
 	}
 	return true
+}
+
+//加载redis队列
+func LoadQueue(queueFunc map[string]func(string)) {
+	if _, ok := Config["redis"]; !ok {
+		return
+	}
+	for ke, va := range queueFunc {
+		k := ke
+		v := va
+		go func() {
+			for {
+				con := Redis.Get()
+				defer con.Close()
+				nameAndData, err := redigo.Strings(con.Do("brpop", k, 0))
+				if err != nil {
+					if err == redigo.ErrNil {
+						err = nil
+						continue
+					}
+					continue
+				}
+				if len(nameAndData) > 1 {
+					data := nameAndData[1]
+					v(data)
+				}
+			}
+		}()
+	}
 }

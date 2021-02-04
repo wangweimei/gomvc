@@ -80,10 +80,10 @@ func (t *IndexController) Default(ctx *fasthttp.RequestCtx) {
 
 ### 路由
 
-在`main.go`文件里面的`index`方法中添加
+在`main.go`文件中添加
 
 ```go
-var c = map[string]func(ctx *fasthttp.RequestCtx){
+routerFunc = map[string]func(ctx *fasthttp.RequestCtx){
 	"/": controller.Index.Default,
 }
 ```
@@ -137,16 +137,11 @@ kill -USR2 进程号
 
 ### CLI操作
 
-在`cli.go`文件里面添加方法，然后在`main.go`文件的入口方法添加CLI的路由
+在`cli.go`文件里面添加方法，然后在`main.go`文件添加CLI的路由
 
 ```go
-switch cmd[1] {
-case "cli":
-	var f = map[string]func(){
-		"Test": Test,//CLI方法
-	}
-	f[cmd[2]]()
-	break
+cliFunc = map[string]func(){
+	"Test": Test,
 }
 ```
 
@@ -188,7 +183,7 @@ func (t *TestQueue) Exec(d string) {
 }
 ```
 
-加载队列处理方法，在`base.go`文件中添加配置，队列名称和相应的处理方法
+加载队列处理方法，在`main.go`文件中添加配置，队列名称和相应的处理方法
 
 ```go
 queueFunc = map[string]func(string){
