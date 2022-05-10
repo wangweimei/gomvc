@@ -9,17 +9,16 @@ import (
 
 	redigo "github.com/gomodule/redigo/redis"
 	jsoniter "github.com/json-iterator/go"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
+	"main/pkg/database"
 )
 
 var (
-	DB     *gorm.DB
-	Redis  *redigo.Pool
-	json   = jsoniter.ConfigCompatibleWithStandardLibrary
-	Config map[string]interface{}
+	DB        *gorm.DB
+	Redis     *redigo.Pool
+	json      = jsoniter.ConfigCompatibleWithStandardLibrary
+	Config    map[string]interface{}
+	dbFactory = database.Factory{}
 )
 
 func init() {
@@ -33,27 +32,7 @@ func init() {
 	json.Unmarshal(f, &c)
 	Config = c
 
-	//mysql
-	if _, ok := c["mysql"]; ok {
-		m := c["mysql"].(map[string]interface{})
-		dsn := m["username"].(string) + ":" + m["pwd"].(string) + "@tcp(" + m["host"].(string) + ":" + m["port"].(string) + ")/" + m["db"].(string) + "?charset=" + m["charset"].(string) + "&parseTime=True&loc=Local"
-		d, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-			SkipDefaultTransaction: true,
-			Logger:                 logger.Default.LogMode(logger.Silent),
-			PrepareStmt:            true,
-			NamingStrategy: schema.NamingStrategy{
-				TablePrefix:   m["prefix"].(string),
-				SingularTable: true,
-			},
-		})
-		if err != nil {
-			panic(err)
-		}
-		sqlDB, _ := d.DB()
-		// SetMaxIdleConns 用于设置连接池中空闲连接的最大数量。
-		sqlDB.SetMaxIdleConns(int(m["maxIdle"].(float64)))
-		DB = d
-	}
+	DB = dbFactory.Init(c)
 
 	//redis
 	if _, ok := c["redis"]; ok {
