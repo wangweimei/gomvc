@@ -12,7 +12,8 @@
         "prefix": "",
         "maxIdle": 1000
     },
-    "redis": {
+    "cache": {
+        "type": "redis",
         "host": "127.0.0.1",
         "pwd": "",
         "port": "6379",

@@ -7,15 +7,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/bradfitz/gomemcache/memcache"
 	redigo "github.com/gomodule/redigo/redis"
 	jsoniter "github.com/json-iterator/go"
 	"gorm.io/gorm"
+	"main/pkg/cache"
 	"main/pkg/database"
 )
 
 var (
 	DB        *gorm.DB
 	Redis     *redigo.Pool
+	Memcache  *memcache.Client
 	json      = jsoniter.ConfigCompatibleWithStandardLibrary
 	Config    map[string]interface{}
 	dbFactory = database.Factory{}
@@ -34,23 +37,18 @@ func init() {
 
 	DB = dbFactory.Init(c)
 
-	//redis
-	if _, ok := c["redis"]; ok {
-		r := c["redis"].(map[string]interface{})
-		pool := redigo.NewPool(func() (redigo.Conn, error) {
-			c, err := redigo.Dial("tcp", r["host"].(string)+":"+r["port"].(string))
-			if err != nil {
-				return nil, err
-			}
-			if r["pwd"] != "" {
-				if _, err := c.Do("AUTH", r["pwd"].(string)); err != nil {
-					c.Close()
-					return nil, err
-				}
-			}
-			return c, nil
-		}, int(r["maxIdle"].(float64)))
-		Redis = pool
+	if _, ok := c["cache"]; ok {
+
+		cacheConfig := c["cache"].(map[string]interface{})
+		ccFactory := cache.Factory{Config: cacheConfig}
+
+		switch cacheConfig["type"].(string) {
+		case "redis":
+			Redis = ccFactory.ConnRedis()
+		case "memcache":
+			Memcache = ccFactory.ConnMemcache()
+		}
+
 	}
 }
 

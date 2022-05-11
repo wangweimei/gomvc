@@ -16,7 +16,7 @@ TLS支持绑定多个域名证书
 
 全局异常处理
 
-支持MySQL、Redis
+支持MySQL、SQlite、Redis、Memcache
 
 Redis消息队列处理
 
